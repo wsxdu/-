@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=5f914495-1f13-4333-9687-0ac302f3990c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=5f914495-1f13-4333-9687-0ac302f3990c">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <title>游戏全家桶</title>
+        <style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial}
+body{background:#f4f4f4;padding:30px 15px;max-width:460px;margin:0 auto}
+.box{background:#fff;padding:22px;border-radius:10px}
+h2{text-align:center;margin-bottom:20px;color:#222}
+.item{margin-bottom:14px}
+label{display:block;margin-bottom:4px;font-size:14px;color:#444}
+select,input{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:15px}
+button{width:100%;padding:11px;background:#2b78e4;color:#fff;border:none;border-radius:6px;font-size:15px;cursor:pointer}
+#res{margin-top:16px;padding:12px;border-radius:6px;white-space:pre-wrap;display:none}
+.ok{background:#e6f7ef;color:#006633}
+.err{background:#fdeeee;color:#b30000}
+</style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>游戏全家桶</h2>
+
+            <div class="item">
+                <label>选择游戏</label>
+                <select id="selGame"></select>
+            </div>
+            <div class="item">
+                <label>设备码</label>
+                <input id="devCode" placeholder="数字设备码" maxlength="8">
+            </div>
+            <button id="btnGen">生成激活码</button>
+            <div id="res"></div>
+            <div>By.Hacker Harris</div>
+            <div>浏览量破1000更新其他游戏</div>
+            <div>更多游戏，尽请期待！</div>
+            <div>如需查看激活算法，用开发者模式查看网页源码即可</div>
+            <div>仅供学习，有能力请支持作者！</div>
+        </div>
+
+        <script>
+
+function genAct1(deviceCode, seed) {
+    if(!/^\d{8}$/.test(deviceCode))return"ERROR_DEV";
+    if(!seed)return"ERROR_SEED";
+    const devNum=parseInt(deviceCode,10),seedNum=parseInt(seed,10);
+    let local0=2654435769^devNum;
+    local0=Math.imul(local0,16777619)^seedNum;
+    local0=Math.imul(local0,16777619);
+    local0^=local0>>>16;
+    local0=Math.imul(local0,2011941483);
+    local0^=local0>>>13;
+    local0=Math.imul(local0,3350769225);
+    local0^=local0>>>16;
+    return ((local0>>>0)%1000000).toString().padStart(6,"0");
+}
+
+function genAct2(devCode, actSeedStr) {
+    if(!/^\d{8}$/.test(devCode))return"ERROR_DEV";
+    if(!/^\d+$/.test(actSeedStr))return"ERROR_SEED";
+    const seedNum=BigInt(actSeedStr)%1000000n;
+    let local1=BigInt(devCode),local2=seedNum/1000n,local3=seedNum%1000n;
+    const mask16=0xFFFFn,mask31=0x7FFFFFFFn,mulA=20077n,addA=12345n,mulB=16838n,mulC=17n;
+    for(let i=0;i<16;i++){
+        const local5=local3,local6=local1&mask16;
+        let local7=mulA*local6+addA;
+        const highPart=(mulA*(local1>>16n)+mulB*local6)&mask16;
+        local7+=0x10000n*highPart;
+        local1=local7&0xFFFFFFFFn&mask31;
+        const local8=local1%1000n;
+        const local9=mulC*(local3^local8)+local8;
+        const local10=(local9*local9)%1000n;
+        const local11=(local2+local10)%1000n;
+        local2=local5;local3=local11;
+    }
+    return (local2*1000n+local3).toString().padStart(6,"0");
+}
+
+
+const ARR0 = [10839,11933,12911,13749,14643,15862,16805,17708,18839,19663,20601,21622,
+        22657,23603,24331,25403,26527,27464,28558,29288,30256,31448,32403,33442,
+        34528,35228,36323,37124,38160,39390,39991,41144];
+const ARR1 = [22225,23145,24144,24895,26110,26981,28120,29089,30067,30963,31966,32921,
+        33938,35066,35705,36732,37674,38794,39918,40598,41651,42684,43772,44792,
+        45624,46564,47492,48537,49634,50452,51418,52324];
+
+const BOX = [
+ [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+ [14,10,4,8,9,15,13,6,1,12,0,2,11,7,5,3],
+ [11,8,12,0,5,2,15,13,10,14,3,6,7,1,9,4],
+ [7,9,3,1,13,12,11,14,2,6,5,10,4,0,15,8],
+ [9,0,5,7,2,4,10,15,14,1,11,12,6,8,3,13],
+ [2,12,6,10,0,11,8,3,4,13,7,5,15,14,1,9],
+ [12,5,1,15,14,13,4,10,0,7,6,3,9,2,8,11],
+ [13,11,7,14,12,1,3,9,5,0,15,4,8,6,2,10],
+ [6,15,14,9,11,3,0,8,12,2,13,7,1,4,10,5],
+ [10,2,8,4,7,6,1,5,15,11,9,14,3,12,13,0],
+];
+const C8 = [2654435769, 2135587861, 4087136352, 275423344,
+      3518319154, 2496678331, 1779033703, 3144134277];
+const SHA_H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,
+         0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+
+function M(x) { return x >>> 0; }
+function rotl(x,n) { return M((x << n) | (x >>> (32-n))); }
+function rotr(x,n) { return M((x >>> n) | (x << (32-n))); }
+
+function decode(enc, key) {
+    const out = [];
+    let prev = key;
+    for(let i=0;i<enc.length;i++){
+        const c = enc[i];
+        const b = c & 0xff;
+        const v = b ^ ((73*i + 17*prev + 167) & 0xff);
+        out.push(v);
+        prev = b;
+    }
+    return new Uint8Array(out);
+}
+
+async function sha256_raw(msgBuf) {
+    const ab = await crypto.subtle.digest("SHA-256", msgBuf);
+    return new Uint8Array(ab);
+}
+
+function concatBuf(a,b){
+    const r=new Uint8Array(a.length+b.length);
+    r.set(a,0); r.set(b,a.length);
+    return r;
+}
+
+async function hmac36(msgBuf, keyBuf) {
+    const k = new Uint8Array(64);
+    k.set(keyBuf);
+    const ik = new Uint8Array(64);
+    const ok = new Uint8Array(64);
+    for(let i=0;i<64;i++){ ik[i]=k[i]^0x36; ok[i]=k[i]^0x5C; }
+    const innerRaw = await crypto.subtle.digest("SHA-256", concatBuf(ik, msgBuf));
+    const inner = new Uint8Array(innerRaw);
+    const outerRaw = await crypto.subtle.digest("SHA-256", concatBuf(ok, inner));
+    return new Uint8Array(outerRaw);
+}
+
+function qr(s, a,b,c,d, x,y){
+    s[a] = M(s[a] + s[b] + x); s[d] = rotr(M(s[d] ^ s[a]),16);
+    s[c] = M(s[c] + s[d]);     s[b] = rotr(M(s[b] ^ s[c]),12);
+    s[a] = M(s[a] + s[b] + y); s[d] = rotr(M(s[d] ^ s[a]),8);
+    s[c] = M(s[c] + s[d]);     s[b] = rotr(M(s[b] ^ s[c]),7);
+}
+
+function unpackLE32(block){
+    const w=[];
+    for(let i=0;i<16;i++){
+        const o=i*4;
+        w.push(M(block[o] | (block[o+1]<<8) | (block[o+2]<<16) | (block[o+3]<<24)));
+    }
+    return w;
+}
+
+function split64(v){
+    const lo = Number(v & 0xFFFFFFFFn);
+    const hi = Number((v >> 32n) & 0xFFFFFFFFn);
+    return {lo, hi};
+}
+
+function compress(state, block, counterBig, final){
+    const w = unpackLE32(block);
+    const x = [...state, ...SHA_H];
+    const {lo, hi} = split64(counterBig);
+    x[12] = M(x[12] ^ lo);
+    x[13] = M(x[13] ^ hi);
+    if(final) x[14] = M(~x[14]);
+    for(let r=0;r<10;r++){
+        const i = BOX[r];
+        qr(x,0,4,8,12,w[i[0]],w[i[1]]);
+        qr(x,1,5,9,13,w[i[2]],w[i[3]]);
+        qr(x,2,6,10,14,w[i[4]],w[i[5]]);
+        qr(x,3,7,11,15,w[i[6]],w[i[7]]);
+        qr(x,0,5,10,15,w[i[8]],w[i[9]]);
+        qr(x,1,6,11,12,w[i[10]],w[i[11]]);
+        qr(x,2,7,8,13,w[i[12]],w[i[13]]);
+        qr(x,3,4,9,14,w[i[14]],w[i[15]]);
+    }
+    for(let j=0;j<8;j++) state[j]=M(state[j]^x[j]^x[j+8]);
+}
+
+async function custom_hash(data, prefix){
+    const pre = Array.from(prefix);
+    while(pre.length<64) pre.push(0);
+    const iv = [...SHA_H];
+    iv[0] = M(16842784 ^ iv[0] ^ (prefix.length << 8));
+    compress(iv, new Uint8Array(pre), 64n, false);
+    let pos=0;
+    let c=64n;
+    while(pos+64 < data.length){
+        c += 64n;
+        compress(iv, data.subarray(pos,pos+64), c, false);
+        pos+=64;
+    }
+    const tail = Array.from(data.subarray(pos));
+    c += BigInt(tail.length);
+    while(tail.length<64) tail.push(0);
+    compress(iv, new Uint8Array(tail), c, true);
+    const out=new Uint8Array(32);
+    for(let i=0;i<8;i++){
+        const v=iv[i];
+        const o=i*4;
+        out[o] = v&0xff; out[o+1]=(v>>>8)&0xff; out[o+2]=(v>>>16)&0xff; out[o+3]=(v>>>24)&0xff;
+    }
+    return out;
+}
+
+async function make_activation_code(deviceCode){
+    if(!/^\d{8}$/.test(deviceCode)) return "ERROR_DEV";
+    if(deviceCode === "00000000") return "";
+    const msgStr = "com.lafs.diudie.dlyccc|offline|3|"+deviceCode;
+    const enc = new TextEncoder();
+    const msgBuf = enc.encode(msgStr);
+
+    const key0 = decode(ARR0,83);
+    const mac = await hmac36(msgBuf, key0);
+    const pre1 = decode(ARR1,169);
+    const cust = await custom_hash(concatBuf(mac,msgBuf), pre1);
+
+    function ld(b,o){ return M(b[o] | b[o+1]<<8 | b[o+2]<<16 | b[o+3]<<24); }
+    const w = [];
+    for(let i=0;i<8;i++){
+        w.push(M( ld(cust,4*i) ^ ld(mac, (7-i)*4) ));
+    }
+    for(let i=0;i<32;i++){
+        const a = i &7;
+        const b = (i+3)&7;
+        const c = (i+5)&7;
+        const t1 = M(w[b] ^ C8[i&7]);
+        const r1 = rotl(t1, (i%13)+5);
+        w[a] = M(w[a] + r1 + M((i+1)*2135587861));
+        const t2 = M(w[a] + C8[(i+3)&7]);
+        const r2 = rotl(t2, (i%17)+3);
+        w[c] = M(w[c] ^ r2);
+    }
+    const arrOut=[];
+    for(let i=0;i<8;i++){
+        let v=w[i];
+        arrOut.push((v>>>24)&0xff);
+        arrOut.push((v>>>16)&0xff);
+        arrOut.push((v>>>8)&0xff);
+        arrOut.push(v&0xff);
+        arrOut.push(mac[(7*i)&31]);
+        arrOut.push(cust[(11*i)&31]);
+    }
+    let v=0n;
+    for(const b of arrOut){
+        v = (v * 256n + BigInt(b)) % 10000000000n;
+    }
+    let s = v.toString().padStart(10,"0");
+    const perm = [6,1,9,4,0,8,3,7,2,5];
+    let resStr = "";
+    for(const p of perm){ resStr += s[p]; }
+    return resStr;
+}
+
+
+function genAct4(displaySerial){
+    if(!/^\d+$/.test(displaySerial)) return "ERROR_DEV";
+    const serialNum = parseInt(displaySerial,10);
+    const v = serialNum << 2;
+    if(v === 0){
+        return "fail";
+    }
+    let code;
+    if(v >= 2200000){
+        code = Math.trunc(0.621 * v + 219);
+    }else{
+        code = Math.trunc(0.715 * v + 508);
+    }
+    return String(code);
+}
+
+
+const GAME_CONFIG=[
+    {name:"赵云与阿斗",algo:"act1",seed:"15"},
+    {name:"愤怒的小鸟",algo:"act1",seed:"16"},
+    {name:"环间桌游",algo:"act1",seed:"10"},
+    {name:"开心消消乐",algo:"act2",seed:"260001"},
+    {name:"三国杀",algo:"act1",seed:"14"},
+    {name:"堆叠大陆",algo:"act3"},
+    {name:"UNO牌",algo:"act4"}
+];
+
+async function getActivationCode(gameName,deviceCode){
+    const cfg=GAME_CONFIG.find(g=>g.name===gameName.trim());
+    if(!cfg)return{ok:false,msg:"不支持的游戏"};
+    let r;
+    if(cfg.algo==="act1"){
+        r = genAct1(deviceCode,cfg.seed);
+    }else if(cfg.algo==="act2"){
+        r = genAct2(deviceCode,cfg.seed);
+    }else if(cfg.algo==="act3"){
+        r = await make_activation_code(deviceCode);
+    }else if(cfg.algo==="act4"){
+        r = genAct4(deviceCode);
+    }else{
+        return {ok:false,msg:"未知算法"};
+    }
+    if(r==="ERROR_DEV")return{ok:false,msg:"设备码必须纯数字"};
+    if(r==="ERROR_SEED")return{ok:false,msg:"种子参数错误"};
+    if(r==="fail") return {ok:false,msg:"计算结果fail，无效设备码"};
+    return{ok:true,code:r};
+}
+
+const selGame=document.getElementById("selGame");
+const devCode=document.getElementById("devCode");
+const btnGen=document.getElementById("btnGen");
+const res=document.getElementById("res");
+
+GAME_CONFIG.forEach(g=>{
+    const opt=document.createElement("option");
+    opt.value=g.name;opt.innerText=g.name;
+    selGame.appendChild(opt);
+});
+
+btnGen.onclick=async ()=>{
+    res.style.display="block";
+    res.innerText="⏳计算中...";
+    const ret=await getActivationCode(selGame.value,devCode.value.trim());
+    if(ret.ok){
+        res.className="ok";
+        res.innerText=`✅${selGame.value}\n激活码：${ret.code}`;
+    }else{
+        res.className="err";
+        res.innerText=`❌${ret.msg}`;
+    }
+};
+devCode.addEventListener("keydown",e=>{
+    if(e.key==="Enter") btnGen.click();
+});
+</script>
+    </body>
+</html>
